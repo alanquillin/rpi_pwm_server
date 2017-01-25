@@ -1,0 +1,92 @@
+---
+- set_fact:
+    username: "{{ ansible_ssh_user }}"
+  when: (username is undefined or username is none or username | trim == '') and ansible_ssh_user is defined
+  tags:
+    - always
+
+- set_fact:
+    username: "{{ ansible_user_id }}"
+  when: (username is undefined or username is none or username | trim == '') and ansible_user_id is defined
+  tags:
+    - always
+
+- debug: msg="Installing as user {{ username }}"
+  tags:
+    - always
+    
+- name: Add required packages
+  apt: name={{item}}
+       state=latest
+       update_cache=yes
+  with_items:
+    - vim
+    - python-virtualenv
+    - python-dev
+  become: yes
+  become_method: sudo
+
+- name: Create {{install_dir}} directory
+  file: path={{install_dir}}
+        mode=0755
+        state=directory
+        owner="{{ username }}"
+  become: yes
+  become_method: sudo
+
+- name: Download service
+  git: repo=https://github.com/alanquillin/rpi_pwm_server.git
+       dest={{install_dir}}
+  become: yes
+  become_user: "{{ username }}"
+
+- name: Check if virtual env already exists
+  stat: path={{install_dir}}/.venv/bin/activate
+  register: virtualenv_stats
+
+- name: Create virtualenv (if it does not already exist)
+  command: "{{item}}"
+  with_items:
+    - virtualenv --prompt="(RPi PWM Server) " {{install_dir}}/.venv
+  become: yes
+  become_user: "{{ username }}"
+  when: not virtualenv_stats.stat.exists
+
+- name: Update pip
+  pip: name=pip
+       state=latest
+       virtualenv={{install_dir}}/.venv
+  become: yes
+  become_user: "{{ username }}"
+
+#- name: Install config file
+#  template: src=rpi_pwm_server.conf.j2
+#            dest=/etc/rpi_pwm_server.conf
+#  become: yes
+#  become_method: sudo
+
+- name: Install service
+  pip: name={{install_dir}}
+       virtualenv={{install_dir}}/.venv
+       extra_args="-e "
+  become: yes
+  become_user: "{{ username }}"
+  ignore_errors: yes
+
+- name: Install Service systemd Unit
+  template: src=rpi_pwm_server.service.j2
+            dest=/etc/systemd/system/rpi_pwm_server.service
+  become: yes
+  become_method: sudo
+
+- name: reload systemd
+  command: systemctl daemon-reload
+  become: yes
+  become_method: sudo
+
+- name: Enable and start service
+  service: name=rpi_pwm_server
+           enabled=yes
+           state=restarted
+  become: yes
+  become_method: sudo

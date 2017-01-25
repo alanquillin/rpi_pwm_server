@@ -24,7 +24,9 @@ to output on.
 
 Installation
 ------------
-1. Clone the repository
+### Manual Installation
+1. Clone or download the [repository](https://github.com/alanquillin/rpi_pwm_server)
+    1. If you downloaded the zipfile, extract the file to **/opt/rpi_pwm_server**
 2. Create a virtual environment *(optional but recommended)*
     ```bash
     $ virtualenv --prompt="(RPi PWM Server) " .venv
@@ -45,7 +47,28 @@ Installation
     $ sudo .venv/bin/python server.py
      
     ```
-    
+5. *(Optional)* Run as a service
+    1. Download the service file: [rpi_pwm_server.service.j2](./ansilble/roles/rpi_pwm_server/templates/rpi_pwm_server.service.j2).
+    2. Modify the file, replacing the "{{ install_dir }}" text with the location you cloned/downloaded the repo too. 
+    3. Rename and move the file to **/etc/systemd/system/rpi_pwm_server.service**
+    4. Restart systemd and enable to service
+        ```bash
+        $ sudo systemctl daemon-reload
+        $ sudo systemctl enable rpi_pwm_server
+        $ sudo systemctl start rpi_pwm_server
+         
+        ```
+    5. Verify that the service is running
+        ```bash
+        $ sudo systemctl status rpi_pwm_server
+         
+        ```
+
+### Automated Installation (using ansible)
+This is the easiest way to install. 
+You can see the instruction [here](./ansilble/README.md).
+
+
 Using the API
 -------------
 The API is simple (currently) and only 1 endpoint supporting to methods

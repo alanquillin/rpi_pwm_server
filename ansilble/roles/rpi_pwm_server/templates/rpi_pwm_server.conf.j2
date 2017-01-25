@@ -1,0 +1,27 @@
+[webserver]
+port = 8081
+
+# Logging configuration
+[loggers]
+keys = root
+
+[handlers]
+keys = console
+
+[formatters]
+keys = rpi_pwm_server
+
+[logger_root]
+level = DEBUG
+handlers = console
+
+[handler_console]
+class = StreamHandler
+level = DEBUG
+formatter = rpi_pwm_server
+args = (sys.stderr,)
+
+[formatter_myhvac]
+# format = %(asctime)s [rpi_pwm_server] %(levelname)-8s: %(name)s: %(message)s
+format = %(levelname)-8s: %(name)s: %(message)s
+class = logging.Formatter

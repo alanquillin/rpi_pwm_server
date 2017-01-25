@@ -1,0 +1,9 @@
+---
+- hosts: all
+  vars_prompt:
+    - name: "install_dir"
+      prompt: "Installation Directory"
+      default: "/opt/rpi_pwm_server"
+      private: false
+  roles:
+    - { role: rpi_pwm_server }
